@@ -1,0 +1,5 @@
+{
+    "pylint.enabled": false,
+    "cloudcode.duetAI.inlineSuggestions.enableAuto": false,
+    // "editor.formatOnSave": true
+}
