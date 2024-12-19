@@ -6,6 +6,7 @@ from sqlalchemy.pool import StaticPool
 from fast_zero.app import app
 from fast_zero.database import get_session
 from fast_zero.models import User, table_registry
+from fast_zero.security import get_password_hash
 from fast_zero.settings import Settings
 
 
@@ -42,9 +43,25 @@ async def session():
 
 @pytest.fixture
 async def user(session: AsyncSession):
-    user = User(username='Teste', email='teste@test.com', password='testtest')
+    pwd = 'testtest'
+    user = User(
+        username='Teste',
+        email='teste@test.com',
+        password=get_password_hash(pwd),
+    )
     session.add(user)
     await session.commit()
     await session.refresh(user)
 
+    user.clean_password = pwd
+
     return user
+
+
+@pytest.fixture
+async def token(ac: AsyncClient, user: User):
+    response = await ac.post(
+        '/token',
+        data={'username': user.username, 'password': user.clean_password},
+    )
+    return response.json()['access_token']

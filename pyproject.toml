@@ -13,6 +13,8 @@ pydantic-settings = "^2.7.0"
 alembic = "^1.14.0"
 aiosqlite = "^0.20.0"
 httpx = "^0.28.1"
+pwdlib = {extras = ["argon2"], version = "^0.2.1"}
+pyjwt = "^2.10.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -24,6 +26,10 @@ taskipy = "^1.14.1"
 [tool.pytest.ini_options]
 pythonpath = "."
 addopts = '-p no:warnings'
+
+[tool.coverage.run]
+concurrency = ['thread', 'greenlet']
+
 
 [tool.ruff]
 line-length = 79
