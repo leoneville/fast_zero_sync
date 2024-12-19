@@ -35,6 +35,36 @@ async def test_create_user(anyio_backend, ac: AsyncClient):
 
 
 @pytest.mark.parametrize('anyio_backend', ['asyncio'])
+async def test_create_user_error_username_conflict(
+    anyio_backend, ac: AsyncClient, user
+):
+    payload = {
+        'username': 'Teste',
+        'email': 'neville@example.com',
+        'password': 'thisismypassword',
+    }
+    response = await ac.post('/users/', json=payload)
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username already exists'}
+
+
+@pytest.mark.parametrize('anyio_backend', ['asyncio'])
+async def test_create_user_error_email_conflict(
+    anyio_backend, ac: AsyncClient, user
+):
+    payload = {
+        'username': 'neville',
+        'email': 'teste@test.com',
+        'password': 'thisismypassword',
+    }
+    response = await ac.post('/users/', json=payload)
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Email already exists'}
+
+
+@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_read_users(anyio_backend, ac: AsyncClient):
     response = await ac.get('/users/')
 
