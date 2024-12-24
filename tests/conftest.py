@@ -61,7 +61,7 @@ async def user(session: AsyncSession):
 @pytest.fixture
 async def token(ac: AsyncClient, user: User):
     response = await ac.post(
-        '/token',
+        '/auth/token',
         data={'username': user.username, 'password': user.clean_password},
     )
     return response.json()['access_token']
