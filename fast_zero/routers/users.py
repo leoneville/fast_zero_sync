@@ -73,12 +73,18 @@ async def read_user_by_id(
     return user
 
 
-@router.put('/', response_model=UserPublic)
+@router.put('/{user_id}', response_model=UserPublic)
 async def update_user(
+    user_id: int,
     user: UserSchema,
     session: T_AsyncSession,
     current_user: T_CurrentUser,
 ):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN, detail='Not enough permissions'
+        )
+
     current_user.email = user.email
     current_user.username = user.username
     current_user.password = get_password_hash(user.password.get_secret_value())
@@ -89,11 +95,17 @@ async def update_user(
     return current_user
 
 
-@router.delete('/', response_model=Message)
+@router.delete('/{user_id}', response_model=Message)
 async def delete_user(
+    user_id: int,
     session: T_AsyncSession,
     current_user: T_CurrentUser,
 ):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN, detail='Not enough permissions'
+        )
+
     await session.delete(current_user)
     await session.commit()
 

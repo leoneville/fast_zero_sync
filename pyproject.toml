@@ -22,6 +22,8 @@ ruff = "^0.8.2"
 pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
 taskipy = "^1.14.1"
+factory-boy = "^3.3.1"
+freezegun = "^1.5.1"
 
 [tool.pytest.ini_options]
 pythonpath = "."
@@ -45,7 +47,7 @@ quote-style = 'single'
 
 [tool.taskipy.tasks]
 run = 'fastapi dev fast_zero/app.py'
-pre_test = 'task lint'
+pre_test = 'task format && task lint'
 test = 'pytest --cov=fast_zero -vv'
 post_test = 'coverage html'
 lint = 'ruff check . && ruff check . --diff'

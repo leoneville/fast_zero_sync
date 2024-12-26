@@ -20,9 +20,9 @@ def test_jwt():
 
 
 @pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_jwt_invalid_token(anyio_backend, ac: AsyncClient):
+async def test_jwt_invalid_token(anyio_backend, ac: AsyncClient, user):
     response = await ac.delete(
-        '/users/', headers={'Authorization': 'Bearer token-invalido'}
+        f'/users/{user.id}', headers={'Authorization': 'Bearer token-invalido'}
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED

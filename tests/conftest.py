@@ -1,6 +1,10 @@
+import factory
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    create_async_engine,
+)
 from sqlalchemy.pool import StaticPool
 
 from fast_zero.app import app
@@ -8,6 +12,15 @@ from fast_zero.database import get_session
 from fast_zero.models import User, table_registry
 from fast_zero.security import get_password_hash
 from fast_zero.settings import Settings
+
+
+class UserFactory(factory.Factory):
+    class Meta:
+        model = User
+
+    username = factory.Sequence(lambda n: f'test{n}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@test.com')
+    password = factory.LazyAttribute(lambda obj: f'#{obj.username}@')
 
 
 @pytest.fixture
@@ -34,7 +47,7 @@ async def session():
     async with engine.begin() as conn:
         await conn.run_sync(table_registry.metadata.create_all)
 
-    async with AsyncSession(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
 
     async with engine.begin() as conn:
@@ -42,20 +55,28 @@ async def session():
 
 
 @pytest.fixture
-async def user(session: AsyncSession):
+async def user(session: AsyncSession) -> User:
     pwd = 'testtest'
-    user = User(
-        username='Teste',
-        email='teste@test.com',
+    user = UserFactory(
         password=get_password_hash(pwd),
     )
     session.add(user)
     await session.commit()
     await session.refresh(user)
 
-    user.clean_password = pwd
+    user.clean_password = pwd  # Monkey Patch
 
     return user
+
+
+@pytest.fixture
+async def other_user(session: AsyncSession) -> User:
+    other_user = UserFactory()
+    session.add(other_user)
+    await session.commit()
+    await session.refresh(other_user)
+
+    return other_user
 
 
 @pytest.fixture
