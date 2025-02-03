@@ -1,11 +1,15 @@
 {
-    "pylint.enabled": false,
-    "cloudcode.duetAI.inlineSuggestions.enableAuto": false,
     "python.testing.pytestArgs": [
         "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "github.copilot.editor.enableAutoCompletions": false,
-    // "editor.formatOnSave": true
+    "files.exclude": {
+        "**/.pytest_cache": true,
+        "**/__pycache__": true
+    },
+    "codeium.enableConfig": {
+        "*": false,
+    },
 }

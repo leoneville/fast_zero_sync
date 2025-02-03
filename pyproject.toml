@@ -45,6 +45,7 @@ select = ['I', 'F', 'E', 'W', 'PL', 'PT']
 preview = true
 quote-style = 'single'
 
+
 [tool.taskipy.tasks]
 run = 'fastapi dev fast_zero/app.py'
 pre_test = 'task format && task lint'

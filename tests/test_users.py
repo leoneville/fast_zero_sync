@@ -112,6 +112,42 @@ async def test_update_user(anyio_backend, ac: AsyncClient, user, token):
 
 
 @pytest.mark.parametrize('anyio_backend', ['asyncio'])
+async def test_update_user_error_username_conflict(
+    anyio_backend, ac: AsyncClient, user, other_user, token
+):
+    response = await ac.put(
+        f'/users/{user.id}',
+        json={
+            'username': other_user.username,
+            'email': user.email,
+            'password': 'thisismypassword',
+        },
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username already exists'}
+
+
+@pytest.mark.parametrize('anyio_backend', ['asyncio'])
+async def test_update_user_error_email_conflict(
+    anyio_backend, ac: AsyncClient, user, other_user, token
+):
+    response = await ac.put(
+        f'/users/{user.id}',
+        json={
+            'username': user.username,
+            'email': other_user.email,
+            'password': 'thisismypassword',
+        },
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Email already exists'}
+
+
+@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_update_user_with_wrong_user(
     anyio_backend, ac: AsyncClient, other_user, token
 ):
