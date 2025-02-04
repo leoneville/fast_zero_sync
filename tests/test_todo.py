@@ -1,21 +1,20 @@
 from http import HTTPStatus
 
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.models import Todo, TodoState
 from tests.conftest import TodoFactory
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_create_todo(
-    anyio_backend,
-    ac: AsyncClient,
+def test_create_todo(
+    client: TestClient,
     token,
     mock_db_time,
 ):
     with mock_db_time(model=Todo) as time:
-        response = await ac.post(
+        response = client.post(
             '/todos/',
             headers={'Authorization': f'Bearer {token}'},
             json={
@@ -35,16 +34,15 @@ async def test_create_todo(
         }
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_list_todos_should_return_5_todos(
-    anyio_backend, ac: AsyncClient, session, user, token
+    client: TestClient, session: AsyncSession, user, token
 ):
     expected_todos = 5
     todos = TodoFactory.create_batch(5, user_id=user.id)
     session.add_all(todos)
     await session.commit()
 
-    response = await ac.get(
+    response = client.get(
         '/todos/',
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -53,16 +51,15 @@ async def test_list_todos_should_return_5_todos(
     assert len(response.json()['todos']) == expected_todos
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_list_todos_pagination_should_return_2_todos(
-    anyio_backend, ac: AsyncClient, session, user, token
+    client: TestClient, session: AsyncSession, user, token
 ):
     expected_todos = 2
     todos = TodoFactory.create_batch(5, user_id=user.id)
     session.add_all(todos)
     await session.commit()
 
-    response = await ac.get(
+    response = client.get(
         '/todos/?offset=1&limit=2',
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -71,7 +68,6 @@ async def test_list_todos_pagination_should_return_2_todos(
     assert len(response.json()['todos']) == expected_todos
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 @pytest.mark.parametrize(
     ('filter_field', 'filter_value'),
     [
@@ -81,9 +77,8 @@ async def test_list_todos_pagination_should_return_2_todos(
     ],
 )
 async def test_list_todos_filter(  # noqa
-    anyio_backend,
-    ac: AsyncClient,
-    session,
+    client: TestClient,
+    session: AsyncSession,
     user,
     token,
     filter_field,
@@ -105,7 +100,7 @@ async def test_list_todos_filter(  # noqa
     session.add_all(todos_map[filter_field])
     await session.commit()
 
-    response = await ac.get(
+    response = client.get(
         f'/todos/?{filter_field}={filter_value}',
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -114,9 +109,8 @@ async def test_list_todos_filter(  # noqa
     assert len(response.json()['todos']) == expected_todos
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_list_todos_filter_combined_should_return_5_todos(
-    anyio_backend, ac: AsyncClient, session, user, token
+    client: TestClient, session: AsyncSession, user, token
 ):
     expected_todos = 5
     session.add_all(
@@ -141,7 +135,7 @@ async def test_list_todos_filter_combined_should_return_5_todos(
 
     await session.commit()
 
-    response = await ac.get(
+    response = client.get(
         '/todos/?title=Test todo combined&description=combined&state=done',
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -150,15 +144,14 @@ async def test_list_todos_filter_combined_should_return_5_todos(
     assert len(response.json()['todos']) == expected_todos
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_delete_todo(
-    anyio_backend, ac: AsyncClient, session, user, token
+    client: TestClient, session: AsyncSession, user, token
 ):
     todo = TodoFactory(user_id=user.id)
     session.add(todo)
     await session.commit()
 
-    response = await ac.delete(
+    response = client.delete(
         f'/todos/{todo.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -169,9 +162,8 @@ async def test_delete_todo(
     }
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_delete_todo_error(anyio_backend, ac: AsyncClient, token):
-    response = await ac.delete(
+def test_delete_todo_error(client: TestClient, token):
+    response = client.delete(
         '/todos/490',
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -180,16 +172,15 @@ async def test_delete_todo_error(anyio_backend, ac: AsyncClient, token):
     assert response.json() == {'detail': 'Task not found.'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_patch_todo(
-    anyio_backend, ac: AsyncClient, session, user, token
+    client: TestClient, session: AsyncSession, user, token
 ):
     todo = TodoFactory(user_id=user.id)
 
     session.add(todo)
     await session.commit()
 
-    response = await ac.patch(
+    response = client.patch(
         f'/todos/{todo.id}',
         json={'title': 'teste!'},
         headers={'Authorization': f'Bearer {token}'},
@@ -198,9 +189,8 @@ async def test_patch_todo(
     assert response.json()['title'] == 'teste!'
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_patch_todo_error(anyio_backend, ac: AsyncClient, token):
-    response = await ac.patch(
+def test_patch_todo_error(client: TestClient, token):
+    response = client.patch(
         '/todos/490',
         json={},
         headers={'Authorization': f'Bearer {token}'},
@@ -209,17 +199,16 @@ async def test_patch_todo_error(anyio_backend, ac: AsyncClient, token):
     assert response.json() == {'detail': 'Task not found.'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
 async def test_list_todos_should_return_all_expected_fields(  # noqa
-    anyio_backend, ac: AsyncClient, session, user, token, mock_db_time
+    client: TestClient, session: AsyncSession, user, token, mock_db_time
 ):
     with mock_db_time(model=Todo) as time:
         todo = TodoFactory.create(user_id=user.id)
         session.add(todo)
         await session.commit()
 
-    await session.refresh(todo)
-    response = await ac.get(
+    session.refresh(todo)
+    response = client.get(
         '/todos/',
         headers={'Authorization': f'Bearer {token}'},
     )

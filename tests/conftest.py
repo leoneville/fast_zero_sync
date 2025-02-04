@@ -1,22 +1,27 @@
+import asyncio
+import sys
 from contextlib import contextmanager
 from datetime import datetime
 
 import factory
 import factory.fuzzy
 import pytest
-from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
     AsyncSession,
     create_async_engine,
 )
-from sqlalchemy.pool import StaticPool
+from testcontainers.postgres import PostgresContainer
 
 from fast_zero.app import app
 from fast_zero.database import get_session
 from fast_zero.models import Todo, TodoState, User, table_registry
 from fast_zero.security import get_password_hash
-from fast_zero.settings import Settings
+
+if sys.platform.startswith('win'):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 class UserFactory(factory.Factory):
@@ -39,26 +44,25 @@ class TodoFactory(factory.Factory):
 
 
 @pytest.fixture
-async def ac(session: AsyncSession):
+async def client(session: AsyncSession):
     def get_session_override():
         return session
 
-    app.dependency_overrides[get_session] = get_session_override
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url=Settings().BASE_URL
-    ) as ac:
-        yield ac
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_session_override
+        yield client
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-async def session():
-    engine = create_async_engine(
-        'sqlite+aiosqlite:///:memory:',
-        connect_args={'check_same_thread': False},
-        poolclass=StaticPool,
-    )
+@pytest.fixture(scope='session')
+async def engine():
+    with PostgresContainer('postgres:16-alpine', driver='psycopg') as postgres:
+        _engine = create_async_engine(postgres.get_connection_url())
+        yield _engine
 
+
+@pytest.fixture
+async def session(engine: AsyncEngine):
     async with engine.begin() as conn:
         await conn.run_sync(table_registry.metadata.create_all)
 
@@ -115,8 +119,8 @@ async def other_user(session: AsyncSession) -> User:
 
 
 @pytest.fixture
-async def token(ac: AsyncClient, user: User):
-    response = await ac.post(
+async def token(client: TestClient, user: User):
+    response = client.post(
         '/auth/token',
         data={'username': user.username, 'password': user.clean_password},
     )

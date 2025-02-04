@@ -1,20 +1,18 @@
 from http import HTTPStatus
 
-import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
 
 from fast_zero.schemas import UserPublic
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_create_user(anyio_backend, ac: AsyncClient):
+def test_create_user(client: TestClient):
     payload = {
         'username': 'neville',
         'email': 'neville@example.com',
         'password': 'thisismypassword',
     }
 
-    response = await ac.post('/users/', json=payload)
+    response = client.post('/users/', json=payload)
 
     assert response.status_code == HTTPStatus.CREATED
     assert response.json() == {
@@ -24,43 +22,34 @@ async def test_create_user(anyio_backend, ac: AsyncClient):
     }
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_create_user_error_username_conflict(
-    anyio_backend, ac: AsyncClient, user
-):
+def test_create_user_error_username_conflict(client: TestClient, user):
     payload = {
         'username': user.username,
         'email': 'neville@example.com',
         'password': 'thisismypassword',
     }
-    response = await ac.post('/users/', json=payload)
+    response = client.post('/users/', json=payload)
 
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {'detail': 'Username already exists'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_create_user_error_email_conflict(
-    anyio_backend, ac: AsyncClient, user
-):
+def test_create_user_error_email_conflict(client: TestClient, user):
     payload = {
         'username': 'neville',
         'email': user.email,
         'password': 'thisismypassword',
     }
-    response = await ac.post('/users/', json=payload)
+    response = client.post('/users/', json=payload)
 
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {'detail': 'Email already exists'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_read_users_with_user(
-    anyio_backend, ac: AsyncClient, user, token, other_user
-):
+def test_read_users_with_user(client: TestClient, user, token, other_user):
     user_schema = UserPublic.model_validate(user).model_dump()
     other_user_schema = UserPublic.model_validate(other_user).model_dump()
-    response = await ac.get(
+    response = client.get(
         '/users/', headers={'Authorization': f'Bearer {token}'}
     )
 
@@ -68,10 +57,9 @@ async def test_read_users_with_user(
     assert response.json() == {'users': [user_schema, other_user_schema]}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_read_user_by_id(anyio_backend, ac: AsyncClient, user, token):
+def test_read_user_by_id(client: TestClient, user, token):
     user_schema = UserPublic.model_validate(user).model_dump()
-    response = await ac.get(
+    response = client.get(
         '/users/1', headers={'Authorization': f'Bearer {token}'}
     )
 
@@ -79,11 +67,8 @@ async def test_read_user_by_id(anyio_backend, ac: AsyncClient, user, token):
     assert response.json() == user_schema
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_read_user_by_id_error_not_found(
-    anyio_backend, ac: AsyncClient, token
-):
-    response = await ac.get(
+def test_read_user_by_id_error_not_found(client: TestClient, token):
+    response = client.get(
         '/users/999', headers={'Authorization': f'Bearer {token}'}
     )
 
@@ -91,9 +76,8 @@ async def test_read_user_by_id_error_not_found(
     assert response.json() == {'detail': 'User not found'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_update_user(anyio_backend, ac: AsyncClient, user, token):
-    response = await ac.put(
+def test_update_user(client: TestClient, user, token):
+    response = client.put(
         f'/users/{user.id}',
         json={
             'username': 'test2',
@@ -111,11 +95,10 @@ async def test_update_user(anyio_backend, ac: AsyncClient, user, token):
     }
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_update_user_error_username_conflict(
-    anyio_backend, ac: AsyncClient, user, other_user, token
+def test_update_user_error_username_conflict(
+    client: TestClient, user, other_user, token
 ):
-    response = await ac.put(
+    response = client.put(
         f'/users/{user.id}',
         json={
             'username': other_user.username,
@@ -129,11 +112,10 @@ async def test_update_user_error_username_conflict(
     assert response.json() == {'detail': 'Username already exists'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_update_user_error_email_conflict(
-    anyio_backend, ac: AsyncClient, user, other_user, token
+def test_update_user_error_email_conflict(
+    client: TestClient, user, other_user, token
 ):
-    response = await ac.put(
+    response = client.put(
         f'/users/{user.id}',
         json={
             'username': user.username,
@@ -147,11 +129,8 @@ async def test_update_user_error_email_conflict(
     assert response.json() == {'detail': 'Email already exists'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_update_user_with_wrong_user(
-    anyio_backend, ac: AsyncClient, other_user, token
-):
-    response = await ac.put(
+def test_update_user_with_wrong_user(client: TestClient, other_user, token):
+    response = client.put(
         f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
@@ -165,9 +144,8 @@ async def test_update_user_with_wrong_user(
     assert response.json() == {'detail': 'Not enough permissions'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_delete_user(anyio_backend, ac: AsyncClient, user, token):
-    response = await ac.delete(
+def test_delete_user(client: TestClient, user, token):
+    response = client.delete(
         f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
     )
 
@@ -175,11 +153,8 @@ async def test_delete_user(anyio_backend, ac: AsyncClient, user, token):
     assert response.json() == {'message': 'User deleted'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_delete_user_with_wrong_user(
-    anyio_backend, ac: AsyncClient, other_user, token
-):
-    response = await ac.delete(
+def test_delete_user_with_wrong_user(client: TestClient, other_user, token):
+    response = client.delete(
         f'/users/{other_user.id}', headers={'Authorization': f'Bearer {token}'}
     )
 

@@ -1,12 +1,10 @@
-import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.models import User
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_create_user(anyio_backend, session: AsyncSession):
+async def test_create_user(session: AsyncSession):
     user = User(
         username='neville',
         email='leo@ville.com',

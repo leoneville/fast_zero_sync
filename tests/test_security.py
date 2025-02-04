@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
-import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
 from jwt import decode
 
 from fast_zero.security import create_access_token, settings
@@ -19,9 +18,8 @@ def test_jwt():
     assert result['exp']
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_jwt_invalid_token(anyio_backend, ac: AsyncClient, user):
-    response = await ac.delete(
+def test_jwt_invalid_token(client: TestClient, user):
+    response = client.delete(
         f'/users/{user.id}', headers={'Authorization': 'Bearer token-invalido'}
     )
 
@@ -29,12 +27,11 @@ async def test_jwt_invalid_token(anyio_backend, ac: AsyncClient, user):
     assert response.json() == {'detail': 'Could not validate credentials'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_get_current_user_not_found(anyio_backend, ac: AsyncClient):
+def test_get_current_user_not_found(client: TestClient):
     data = {'no-username': 'nonuser'}
     token = create_access_token(data)
 
-    response = await ac.get(
+    response = client.get(
         '/users/', headers={'Authorization': f'Bearer {token}'}
     )
 
@@ -42,14 +39,11 @@ async def test_get_current_user_not_found(anyio_backend, ac: AsyncClient):
     assert response.json() == {'detail': 'Could not validate credentials'}
 
 
-@pytest.mark.parametrize('anyio_backend', ['asyncio'])
-async def test_get_current_user_does_not_exists(
-    anyio_backend, ac: AsyncClient
-):
+def test_get_current_user_does_not_exists(client: TestClient):
     data = {'sub': 'nonuser'}
     token = create_access_token(data)
 
-    response = await ac.get(
+    response = client.get(
         '/users/', headers={'Authorization': f'Bearer {token}'}
     )
 
