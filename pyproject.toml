@@ -16,7 +16,6 @@ httpx = "^0.28.1"
 pwdlib = {extras = ["argon2"], version = "^0.2.1"}
 pyjwt = "^2.10.1"
 asyncpg = "^0.30.0"
-psycopg = {extras = ["binary"], version = "^3.2.4"}
 gunicorn = "^23.0.0"
 
 
@@ -30,6 +29,7 @@ freezegun = "^1.5.1"
 testcontainers = "^4.9.1"
 pytest-asyncio = "^0.25.3"
 gevent = "^24.11.1"
+psycopg = {extras = ["binary"], version = "^3.2.4"}
 
 [tool.pytest.ini_options]
 pythonpath = "."
