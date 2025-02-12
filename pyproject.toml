@@ -8,38 +8,25 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "3.12.*"
 fastapi = {extras = ["standard"], version = "^0.115.6"}
-sqlalchemy = "^2.0.36"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.38"}
 pydantic-settings = "^2.7.0"
 alembic = "^1.14.0"
-aiosqlite = "^0.20.0"
-httpx = "^0.28.1"
 pwdlib = {extras = ["argon2"], version = "^0.2.1"}
 pyjwt = "^2.10.1"
-asyncpg = "^0.30.0"
-gunicorn = "^23.0.0"
+psycopg = {extras = ["binary"], version = "^3.2.4"}
+aiosqlite = "^0.21.0"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.8.2"
 pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
 taskipy = "^1.14.1"
+ruff = "^0.8.2"
+httpx = "^0.28.1"
+pytest-asyncio = "^0.25.3"
 factory-boy = "^3.3.1"
 freezegun = "^1.5.1"
 testcontainers = "^4.9.1"
-pytest-asyncio = "^0.25.3"
-gevent = "^24.11.1"
-psycopg = {extras = ["binary"], version = "^3.2.4"}
-
-[tool.pytest.ini_options]
-pythonpath = "."
-addopts = '-p no:warnings'
-asyncio_mode = 'auto'
-asyncio_default_fixture_loop_scope = 'session'
-
-[tool.coverage.run]
-concurrency = ['thread', 'gevent']
-
 
 [tool.ruff]
 line-length = 79
@@ -53,14 +40,22 @@ select = ['I', 'F', 'E', 'W', 'PL', 'PT']
 preview = true
 quote-style = 'single'
 
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = '-p no:warnings'
+asyncio_default_fixture_loop_scope = 'function'
+
+[tool.coverage.run]
+concurrency = ['thread', 'greenlet']
 
 [tool.taskipy.tasks]
+lint = 'ruff check'
+pre_format = 'ruff check --fix'
+format = 'ruff format'
 run = 'fastapi dev fast_zero/app.py'
-pre_test = 'task format && task lint'
-test = 'pytest --cov=fast_zero -vv'
+pre_test = 'task lint'
+test = 'pytest -s -x --cov=fast_zero -vv'
 post_test = 'coverage html'
-lint = 'ruff check . && ruff check . --diff'
-format = 'ruff check . --fix && ruff format .'
 
 [build-system]
 requires = ["poetry-core"]

@@ -48,6 +48,17 @@ class TodoList(BaseModel):
     todos: list[TodoPublic]
 
 
+class FilterPage(BaseModel):
+    offset: int = 0
+    limit: int = 100
+
+
+class FilterTodo(FilterPage):
+    title: str | None = None
+    description: str | None = None
+    state: TodoState | None = None
+
+
 class TodoUpdate(BaseModel):
     title: str | None = None
     description: str | None = None

@@ -19,7 +19,10 @@ services:
     depends_on:
       - fastzero_database
     environment:
-      DATABASE_URL: postgresql+asyncpg://app_user:app_password@fastzero_database:5432/app_db
+      DATABASE_URL: postgresql+psycopg://app_user:app_password@fastzero_database:5432/app_db
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
 
 volumes:
   pgdata:

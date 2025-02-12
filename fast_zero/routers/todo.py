@@ -1,13 +1,14 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.database import get_session
-from fast_zero.models import Todo, TodoState, User
+from fast_zero.models import Todo, User
 from fast_zero.schemas import (
+    FilterTodo,
     Message,
     TodoList,
     TodoPublic,
@@ -40,29 +41,29 @@ async def create_todo(
 
 
 @router.get('/', response_model=TodoList)
-async def list_todos(  # noqa
+async def list_todos(
     session: T_AsyncSession,
     user: T_CurrentUser,
-    title: str | None = None,
-    description: str | None = None,
-    state: TodoState | None = None,
-    offset: int | None = None,
-    limit: int | None = None,
+    todo_filter: Annotated[FilterTodo, Query()],
 ):
     query = select(Todo).where(Todo.user_id == user.id)
 
-    if title:
-        query = query.filter(Todo.title.contains(title))
+    if todo_filter.title:
+        query = query.filter(Todo.title.contains(todo_filter.title))
 
-    if description:
-        query = query.filter(Todo.description.contains(description))
+    if todo_filter.description:
+        query = query.filter(
+            Todo.description.contains(todo_filter.description)
+        )
 
-    if state:
-        query = query.filter(Todo.state == state)
+    if todo_filter.state:
+        query = query.filter(Todo.state == todo_filter.state)
 
-    todos = await session.scalars(query.offset(offset).limit(limit))
+    todos = await session.scalars(
+        query.offset(todo_filter.offset).limit(todo_filter.limit)
+    )
 
-    return {'todos': todos}
+    return {'todos': todos}  # TODO utilizando .all() porque???
 
 
 @router.delete('/{todo_id}', response_model=Message)

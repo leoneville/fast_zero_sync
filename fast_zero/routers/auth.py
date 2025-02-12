@@ -43,7 +43,7 @@ async def login_for_access_token(
 
 
 @router.post('/refresh_token', response_model=Token)
-def refresh_access_token(user: T_CurrentUser):
+async def refresh_access_token(user: T_CurrentUser):
     new_access_token = create_access_token(data_claims={'sub': user.username})
 
     return {'access_token': new_access_token, 'token_type': 'Bearer'}

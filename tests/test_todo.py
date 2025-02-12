@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.models import Todo, TodoState
-from tests.conftest import TodoFactory
+from tests.factories import TodoFactory
 
 
 def test_create_todo(
@@ -34,12 +34,12 @@ def test_create_todo(
         }
 
 
+@pytest.mark.asyncio
 async def test_list_todos_should_return_5_todos(
     client: TestClient, session: AsyncSession, user, token
 ):
     expected_todos = 5
-    todos = TodoFactory.create_batch(5, user_id=user.id)
-    session.add_all(todos)
+    session.add_all(TodoFactory.create_batch(5, user_id=user.id))
     await session.commit()
 
     response = client.get(
@@ -51,12 +51,12 @@ async def test_list_todos_should_return_5_todos(
     assert len(response.json()['todos']) == expected_todos
 
 
+@pytest.mark.asyncio
 async def test_list_todos_pagination_should_return_2_todos(
     client: TestClient, session: AsyncSession, user, token
 ):
     expected_todos = 2
-    todos = TodoFactory.create_batch(5, user_id=user.id)
-    session.add_all(todos)
+    session.add_all(TodoFactory.create_batch(5, user_id=user.id))
     await session.commit()
 
     response = client.get(
@@ -68,6 +68,7 @@ async def test_list_todos_pagination_should_return_2_todos(
     assert len(response.json()['todos']) == expected_todos
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('filter_field', 'filter_value'),
     [
@@ -109,6 +110,7 @@ async def test_list_todos_filter(  # noqa
     assert len(response.json()['todos']) == expected_todos
 
 
+@pytest.mark.asyncio
 async def test_list_todos_filter_combined_should_return_5_todos(
     client: TestClient, session: AsyncSession, user, token
 ):
@@ -144,6 +146,7 @@ async def test_list_todos_filter_combined_should_return_5_todos(
     assert len(response.json()['todos']) == expected_todos
 
 
+@pytest.mark.asyncio
 async def test_delete_todo(
     client: TestClient, session: AsyncSession, user, token
 ):
@@ -172,6 +175,7 @@ def test_delete_todo_error(client: TestClient, token):
     assert response.json() == {'detail': 'Task not found.'}
 
 
+@pytest.mark.asyncio
 async def test_patch_todo(
     client: TestClient, session: AsyncSession, user, token
 ):
@@ -189,6 +193,7 @@ async def test_patch_todo(
     assert response.json()['title'] == 'teste!'
 
 
+@pytest.mark.asyncio
 def test_patch_todo_error(client: TestClient, token):
     response = client.patch(
         '/todos/490',
@@ -199,6 +204,7 @@ def test_patch_todo_error(client: TestClient, token):
     assert response.json() == {'detail': 'Task not found.'}
 
 
+@pytest.mark.asyncio
 async def test_list_todos_should_return_all_expected_fields(  # noqa
     client: TestClient, session: AsyncSession, user, token, mock_db_time
 ):

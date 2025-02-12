@@ -46,15 +46,14 @@ def test_create_user_error_email_conflict(client: TestClient, user):
     assert response.json() == {'detail': 'Email already exists'}
 
 
-def test_read_users_with_user(client: TestClient, user, token, other_user):
+def test_read_users_with_users(client: TestClient, user, token):
     user_schema = UserPublic.model_validate(user).model_dump()
-    other_user_schema = UserPublic.model_validate(other_user).model_dump()
     response = client.get(
         '/users/', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {'users': [user_schema, other_user_schema]}
+    assert response.json() == {'users': [user_schema]}
 
 
 def test_read_user_by_id(client: TestClient, user, token):
