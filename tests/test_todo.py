@@ -193,7 +193,7 @@ async def test_patch_todo(
     assert response.json()['title'] == 'teste!'
 
 
-@pytest.mark.asyncio
+
 def test_patch_todo_error(client: TestClient, token):
     response = client.patch(
         '/todos/490',
@@ -213,19 +213,19 @@ async def test_list_todos_should_return_all_expected_fields(  # noqa
         session.add(todo)
         await session.commit()
 
-    session.refresh(todo)
-    response = client.get(
-        '/todos/',
-        headers={'Authorization': f'Bearer {token}'},
-    )
+        await session.refresh(todo)
+        response = client.get(
+            '/todos/',
+            headers={'Authorization': f'Bearer {token}'},
+        )
 
-    assert response.json()['todos'] == [
-        {
-            'created_at': time.isoformat(),
-            'updated_at': time.isoformat(),
-            'description': todo.description,
-            'id': todo.id,
-            'state': todo.state,
-            'title': todo.title,
-        }
-    ]
+        assert response.json()['todos'] == [
+            {
+                'created_at': time.isoformat(),
+                'updated_at': time.isoformat(),
+                'description': todo.description,
+                'id': todo.id,
+                'state': todo.state,
+                'title': todo.title,
+            }
+        ]
