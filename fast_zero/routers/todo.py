@@ -63,7 +63,7 @@ async def list_todos(
         query.offset(todo_filter.offset).limit(todo_filter.limit)
     )
 
-    return {'todos': todos}  # TODO utilizando .all() porque???
+    return {'todos': todos.all()}
 
 
 @router.delete('/{todo_id}', response_model=Message)
