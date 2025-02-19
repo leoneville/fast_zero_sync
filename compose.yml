@@ -13,6 +13,8 @@ services:
   fastzero_app:
     image: fastzero_app
     build: .
+    volumes:
+      - ./:/app
     entrypoint: ./entrypoint.sh
     ports:
       - "8000:8000"

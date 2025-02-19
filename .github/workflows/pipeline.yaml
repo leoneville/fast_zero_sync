@@ -1,5 +1,5 @@
 name: Pipeline
-on: [push, pull_request] # O que faz o workflow ser executado
+on: [push, pull_request]
 
 jobs:
   test:
@@ -15,16 +15,18 @@ jobs:
       - name: Copia os arquivos do repositório
         uses: actions/checkout@v3
 
-      - name: Instalar o Python
-        uses: actions/setup-python@v5
+      - name: Instalar o python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      - name: Instalar o Poetry
-        run: pipx install poetry
+      - name: Instalar o poetry
+        run: |
+          pipx install poetry
+          pipx ensurepath
 
       - name: Instalar dependências
-        run: poetry install
+        run: pipx run poetry install
 
       - name: Executar testes
-        run: poetry run task test
+        run: pipx run poetry run task test
